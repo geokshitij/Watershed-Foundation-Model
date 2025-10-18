@@ -1,0 +1,1010 @@
+.
+├── benchmarks
+│   └── imagenet
+│       ├── resnet50
+│       │   ├── barlowtwins.py
+│       │   ├── byol.py
+│       │   ├── dcl.py
+│       │   ├── dclw.py
+│       │   ├── dino.py
+│       │   ├── finetune_eval.py
+│       │   ├── knn_eval.py
+│       │   ├── linear_eval.py
+│       │   ├── main.py
+│       │   ├── mocov2.py
+│       │   ├── README.md
+│       │   ├── simclr.py
+│       │   ├── swav.py
+│       │   ├── tico.py
+│       │   └── vicreg.py
+│       └── vitb16
+│           ├── aim.py
+│           ├── dino.py
+│           ├── dinov2.py
+│           ├── finetune_eval.py
+│           ├── ibot.py
+│           ├── knn_eval.py
+│           ├── linear_eval.py
+│           ├── mae.py
+│           └── main.py
+├── CITATION.cff
+├── codecov.yml
+├── CONTRIBUTING.md
+├── docs
+│   ├── app.yaml
+│   ├── logos
+│   │   ├── lightly_logo_crop_white_text.png
+│   │   ├── lightly_logo_crop.png
+│   │   ├── lightly_logo_square.png
+│   │   ├── lightly_logo.png
+│   │   ├── lightly_SSL_logo_crop_white_text.png
+│   │   └── lightly_SSL_logo_crop.png
+│   ├── make.bat
+│   ├── Makefile
+│   ├── README.md
+│   └── source
+│       ├── _static
+│       │   └── my-styles.css
+│       ├── _templates
+│       │   ├── autosummary
+│       │   │   ├── base.rst
+│       │   │   ├── class.rst
+│       │   │   └── module.rst
+│       │   ├── footer.html
+│       │   └── layout.html
+│       ├── conf.py
+│       ├── docker_archive
+│       │   └── overview.rst
+│       ├── examples
+│       │   ├── aim.rst
+│       │   ├── barlowtwins.rst
+│       │   ├── byol.rst
+│       │   ├── dcl.rst
+│       │   ├── densecl.rst
+│       │   ├── dino.rst
+│       │   ├── dinov2.rst
+│       │   ├── fastsiam.rst
+│       │   ├── ibot.rst
+│       │   ├── mae.rst
+│       │   ├── mmcr.rst
+│       │   ├── moco.rst
+│       │   ├── models.rst
+│       │   ├── msn.rst
+│       │   ├── nnclr.rst
+│       │   ├── pmsn.rst
+│       │   ├── simclr.rst
+│       │   ├── simmim.rst
+│       │   ├── simsiam.rst
+│       │   ├── smog.rst
+│       │   ├── swav.rst
+│       │   ├── tico.rst
+│       │   ├── vicreg.rst
+│       │   └── vicregl.rst
+│       ├── favicon.png
+│       ├── getting_started
+│       │   ├── advanced.rst
+│       │   ├── benchmarks
+│       │   │   ├── cifar10_benchmark.py
+│       │   │   ├── imagenet100_benchmark.py
+│       │   │   └── imagenette_benchmark.py
+│       │   ├── benchmarks.rst
+│       │   ├── code_examples
+│       │   │   └── plot_image_augmentations.py
+│       │   ├── command_line_tool.rst
+│       │   ├── distributed_training.rst
+│       │   ├── images
+│       │   │   ├── al_accuracy_plot.png
+│       │   │   ├── cifar10_benchmark_knn_accuracy_800_epochs.png
+│       │   │   ├── cli_example.png
+│       │   │   ├── custom_metadata_weather_temperature.png
+│       │   │   ├── dataset_home.jpg
+│       │   │   ├── dataset_overview.jpg
+│       │   │   ├── dino_augmentations.jpg
+│       │   │   ├── lightly_overview.png
+│       │   │   ├── simclr_augmentations_no_blur.jpg
+│       │   │   ├── simclr_augmentations.jpg
+│       │   │   ├── webapp_create_selection.gif
+│       │   │   ├── webapp_dataset_id.jpg
+│       │   │   ├── webapp_embedding.jpg
+│       │   │   ├── webapp_image_upload.jpg
+│       │   │   ├── webapp_selection_new_tag.gif
+│       │   │   ├── webapp_tags.gif
+│       │   │   └── webapp_token.gif
+│       │   ├── install.rst
+│       │   ├── lightly_at_a_glance.rst
+│       │   └── main_concepts.rst
+│       ├── index.rst
+│       ├── lightly.api.rst
+│       ├── lightly.cli.rst
+│       ├── lightly.core.rst
+│       ├── lightly.data.rst
+│       ├── lightly.loss.rst
+│       ├── lightly.models.rst
+│       ├── lightly.models.utils.rst
+│       ├── lightly.rst
+│       ├── lightly.transforms.rst
+│       ├── lightly.utils.rst
+│       ├── tutorials
+│       │   └── structure_your_input.rst
+│       └── tutorials_source
+│           ├── package
+│           │   ├── Base-RCNN-FPN.yaml
+│           │   ├── README.txt
+│           │   ├── tutorial_checkpoint_finetuning.py
+│           │   ├── tutorial_custom_augmentations.py
+│           │   ├── tutorial_moco_memory_bank.py
+│           │   ├── tutorial_pretrain_detectron2.py
+│           │   ├── tutorial_simclr_clothing.py
+│           │   ├── tutorial_simsiam_esa.py
+│           │   └── tutorial_timm_backbone.py
+│           └── platform
+│               ├── images
+│               │   ├── clothing-dataset-small-structure.png
+│               │   ├── custom_metadata_configuration_aquarium.png
+│               │   ├── custom_metadata_scatter_plot_with_tag.png
+│               │   ├── custom_metadata_scatter_plot.png
+│               │   ├── final_tag_tree.png
+│               │   ├── selection_create_request.png
+│               │   ├── tutorial_cropped_objects_metadata
+│               │   │   ├── sku110k_config_metadata.jpg
+│               │   │   ├── sku110k_explore_sort_objectness.jpg
+│               │   │   ├── sku110k_lightly_magic.jpg
+│               │   │   ├── sku110k_select_nn.jpg
+│               │   │   └── sku110k_selected_images.jpg
+│               │   └── tutorial_export_labelstudio
+│               │       ├── labelstudio_import_dialog.jpg
+│               │       ├── labelstudio_import_finished.jpg
+│               │       └── labelstudio_imported_file.jpg
+│               ├── README.txt
+│               └── tutorial_label_studio_export.py
+├── examples
+│   ├── create_example_nbs.py
+│   ├── notebooks
+│   │   ├── pytorch
+│   │   │   ├── aim.ipynb
+│   │   │   ├── barlowtwins.ipynb
+│   │   │   ├── byol.ipynb
+│   │   │   ├── dcl.ipynb
+│   │   │   ├── densecl.ipynb
+│   │   │   ├── dino.ipynb
+│   │   │   ├── dinov2.ipynb
+│   │   │   ├── directclr.ipynb
+│   │   │   ├── fastsiam.ipynb
+│   │   │   ├── ibot.ipynb
+│   │   │   ├── ijepa.ipynb
+│   │   │   ├── mae.ipynb
+│   │   │   ├── mmcr.ipynb
+│   │   │   ├── moco.ipynb
+│   │   │   ├── msn.ipynb
+│   │   │   ├── nnclr.ipynb
+│   │   │   ├── pmsn.ipynb
+│   │   │   ├── simclr.ipynb
+│   │   │   ├── simmim.ipynb
+│   │   │   ├── simsiam.ipynb
+│   │   │   ├── smog.ipynb
+│   │   │   ├── swav_queue.ipynb
+│   │   │   ├── swav.ipynb
+│   │   │   ├── tico.ipynb
+│   │   │   ├── vicreg.ipynb
+│   │   │   └── vicregl.ipynb
+│   │   ├── pytorch_lightning
+│   │   │   ├── aim.ipynb
+│   │   │   ├── barlowtwins.ipynb
+│   │   │   ├── byol.ipynb
+│   │   │   ├── dcl.ipynb
+│   │   │   ├── densecl.ipynb
+│   │   │   ├── dino.ipynb
+│   │   │   ├── dinov2.ipynb
+│   │   │   ├── fastsiam.ipynb
+│   │   │   ├── ibot.ipynb
+│   │   │   ├── ijepa.ipynb
+│   │   │   ├── mae.ipynb
+│   │   │   ├── mmcr.ipynb
+│   │   │   ├── moco.ipynb
+│   │   │   ├── msn.ipynb
+│   │   │   ├── nnclr.ipynb
+│   │   │   ├── pmsn.ipynb
+│   │   │   ├── simclr.ipynb
+│   │   │   ├── simmim.ipynb
+│   │   │   ├── simsiam.ipynb
+│   │   │   ├── smog.ipynb
+│   │   │   ├── swav_queue.ipynb
+│   │   │   ├── swav.ipynb
+│   │   │   ├── tico.ipynb
+│   │   │   ├── vicreg.ipynb
+│   │   │   └── vicregl.ipynb
+│   │   └── pytorch_lightning_distributed
+│   │       ├── aim.ipynb
+│   │       ├── barlowtwins.ipynb
+│   │       ├── byol.ipynb
+│   │       ├── dcl.ipynb
+│   │       ├── densecl.ipynb
+│   │       ├── dino.ipynb
+│   │       ├── dinov2.ipynb
+│   │       ├── fastsiam.ipynb
+│   │       ├── ibot.ipynb
+│   │       ├── ijepa.ipynb
+│   │       ├── mae.ipynb
+│   │       ├── mmcr.ipynb
+│   │       ├── moco.ipynb
+│   │       ├── msn.ipynb
+│   │       ├── nnclr.ipynb
+│   │       ├── pmsn.ipynb
+│   │       ├── simclr.ipynb
+│   │       ├── simmim.ipynb
+│   │       ├── simsiam.ipynb
+│   │       ├── swav.ipynb
+│   │       ├── tico.ipynb
+│   │       ├── vicreg.ipynb
+│   │       └── vicregl.ipynb
+│   ├── pytorch
+│   │   ├── aim.py
+│   │   ├── barlowtwins.py
+│   │   ├── byol.py
+│   │   ├── dcl.py
+│   │   ├── densecl.py
+│   │   ├── dino.py
+│   │   ├── dinov2.py
+│   │   ├── directclr.py
+│   │   ├── fastsiam.py
+│   │   ├── ibot.py
+│   │   ├── ijepa.py
+│   │   ├── mae.py
+│   │   ├── mmcr.py
+│   │   ├── moco.py
+│   │   ├── msn.py
+│   │   ├── nnclr.py
+│   │   ├── pmsn.py
+│   │   ├── simclr.py
+│   │   ├── simmim.py
+│   │   ├── simsiam.py
+│   │   ├── smog.py
+│   │   ├── swav_queue.py
+│   │   ├── swav.py
+│   │   ├── tico.py
+│   │   ├── vicreg.py
+│   │   └── vicregl.py
+│   ├── pytorch_lightning
+│   │   ├── aim.py
+│   │   ├── barlowtwins.py
+│   │   ├── byol.py
+│   │   ├── dcl.py
+│   │   ├── densecl.py
+│   │   ├── dino.py
+│   │   ├── dinov2.py
+│   │   ├── fastsiam.py
+│   │   ├── ibot.py
+│   │   ├── ijepa.py
+│   │   ├── mae.py
+│   │   ├── mmcr.py
+│   │   ├── moco.py
+│   │   ├── msn.py
+│   │   ├── nnclr.py
+│   │   ├── pmsn.py
+│   │   ├── simclr.py
+│   │   ├── simmim.py
+│   │   ├── simsiam.py
+│   │   ├── smog.py
+│   │   ├── swav_queue.py
+│   │   ├── swav.py
+│   │   ├── tico.py
+│   │   ├── vicreg.py
+│   │   └── vicregl.py
+│   ├── pytorch_lightning_distributed
+│   │   ├── aim.py
+│   │   ├── barlowtwins.py
+│   │   ├── byol.py
+│   │   ├── dcl.py
+│   │   ├── densecl.py
+│   │   ├── dino.py
+│   │   ├── dinov2.py
+│   │   ├── fastsiam.py
+│   │   ├── ibot.py
+│   │   ├── ijepa.py
+│   │   ├── mae.py
+│   │   ├── mmcr.py
+│   │   ├── moco.py
+│   │   ├── msn.py
+│   │   ├── nnclr.py
+│   │   ├── pmsn.py
+│   │   ├── simclr.py
+│   │   ├── simmim.py
+│   │   ├── simsiam.py
+│   │   ├── swav.py
+│   │   ├── tico.py
+│   │   ├── vicreg.py
+│   │   └── vicregl.py
+│   └── README.md
+├── LICENSE.txt
+├── lightly
+│   ├── __init__.py
+│   ├── active_learning
+│   │   ├── __init__.py
+│   │   └── config
+│   │       ├── __init__.py
+│   │       └── selection_config.py
+│   ├── api
+│   │   ├── __init__.py
+│   │   ├── _version_checking.py
+│   │   ├── api_workflow_artifacts.py
+│   │   ├── api_workflow_client.py
+│   │   ├── api_workflow_collaboration.py
+│   │   ├── api_workflow_compute_worker.py
+│   │   ├── api_workflow_datasets.py
+│   │   ├── api_workflow_datasource_listing.py
+│   │   ├── api_workflow_datasources.py
+│   │   ├── api_workflow_download_dataset.py
+│   │   ├── api_workflow_export.py
+│   │   ├── api_workflow_predictions.py
+│   │   ├── api_workflow_selection.py
+│   │   ├── api_workflow_tags.py
+│   │   ├── api_workflow_upload_embeddings.py
+│   │   ├── api_workflow_upload_metadata.py
+│   │   ├── bitmask.py
+│   │   ├── download.py
+│   │   ├── patch.py
+│   │   ├── retry_utils.py
+│   │   ├── serve.py
+│   │   ├── swagger_api_client.py
+│   │   ├── swagger_rest_client.py
+│   │   └── utils.py
+│   ├── cli
+│   │   ├── __init__.py
+│   │   ├── _cli_simclr.py
+│   │   ├── _helpers.py
+│   │   ├── config
+│   │   │   ├── __init__.py
+│   │   │   ├── config.yaml
+│   │   │   ├── get_config.py
+│   │   │   └── lightly-serve.yaml
+│   │   ├── crop_cli.py
+│   │   ├── download_cli.py
+│   │   ├── embed_cli.py
+│   │   ├── lightly_cli.py
+│   │   ├── serve_cli.py
+│   │   ├── train_cli.py
+│   │   └── version_cli.py
+│   ├── core.py
+│   ├── data
+│   │   ├── __init__.py
+│   │   ├── _helpers.py
+│   │   ├── _image_loaders.py
+│   │   ├── _image.py
+│   │   ├── _utils.py
+│   │   ├── _video.py
+│   │   ├── collate.py
+│   │   ├── dataset.py
+│   │   ├── lightly_subset.py
+│   │   └── multi_view_collate.py
+│   ├── embedding
+│   │   ├── __init__.py
+│   │   ├── _base.py
+│   │   ├── callbacks.py
+│   │   └── embedding.py
+│   ├── loss
+│   │   ├── __init__.py
+│   │   ├── barlow_twins_loss.py
+│   │   ├── dcl_loss.py
+│   │   ├── detcon_loss.py
+│   │   ├── dino_loss.py
+│   │   ├── directclr_loss.py
+│   │   ├── emp_ssl_loss.py
+│   │   ├── hypersphere_loss.py
+│   │   ├── ibot_loss.py
+│   │   ├── koleo_loss.py
+│   │   ├── macl_loss.py
+│   │   ├── memory_bank.py
+│   │   ├── mmcr_loss.py
+│   │   ├── msn_loss.py
+│   │   ├── negative_cosine_similarity.py
+│   │   ├── ntx_ent_loss.py
+│   │   ├── pmsn_loss.py
+│   │   ├── regularizer
+│   │   │   ├── __init__.py
+│   │   │   └── co2.py
+│   │   ├── swav_loss.py
+│   │   ├── sym_neg_cos_sim_loss.py
+│   │   ├── tico_loss.py
+│   │   ├── vicreg_loss.py
+│   │   ├── vicregl_loss.py
+│   │   └── wmse_loss.py
+│   ├── models
+│   │   ├── __init__.py
+│   │   ├── _momentum.py
+│   │   ├── barlowtwins.py
+│   │   ├── batchnorm.py
+│   │   ├── byol.py
+│   │   ├── moco.py
+│   │   ├── modules
+│   │   │   ├── __init__.py
+│   │   │   ├── center.py
+│   │   │   ├── heads_timm.py
+│   │   │   ├── heads.py
+│   │   │   ├── ijepa_timm.py
+│   │   │   ├── ijepa.py
+│   │   │   ├── masked_autoencoder_timm.py
+│   │   │   ├── masked_autoencoder.py
+│   │   │   ├── masked_causal_vision_transformer.py
+│   │   │   ├── masked_vision_transformer_timm.py
+│   │   │   ├── masked_vision_transformer_torchvision.py
+│   │   │   ├── masked_vision_transformer.py
+│   │   │   ├── memory_bank.py
+│   │   │   └── nn_memory_bank.py
+│   │   ├── nnclr.py
+│   │   ├── resnet.py
+│   │   ├── simclr.py
+│   │   ├── simsiam.py
+│   │   ├── utils.py
+│   │   └── zoo.py
+│   ├── openapi_generated
+│   │   ├── __init__.py
+│   │   └── swagger_client
+│   │       ├── __init__.py
+│   │       ├── api
+│   │       │   ├── __init__.py
+│   │       │   ├── collaboration_api.py
+│   │       │   ├── datasets_api.py
+│   │       │   ├── datasources_api.py
+│   │       │   ├── docker_api.py
+│   │       │   ├── embeddings_api.py
+│   │       │   ├── embeddings2d_api.py
+│   │       │   ├── jobs_api.py
+│   │       │   ├── mappings_api.py
+│   │       │   ├── meta_data_configurations_api.py
+│   │       │   ├── predictions_api.py
+│   │       │   ├── quota_api.py
+│   │       │   ├── samples_api.py
+│   │       │   ├── samplings_api.py
+│   │       │   ├── scores_api.py
+│   │       │   ├── tags_api.py
+│   │       │   ├── teams_api.py
+│   │       │   └── versioning_api.py
+│   │       ├── api_client.py
+│   │       ├── api_response.py
+│   │       ├── configuration.py
+│   │       ├── exceptions.py
+│   │       ├── models
+│   │       │   ├── __init__.py
+│   │       │   ├── active_learning_score_create_request.py
+│   │       │   ├── active_learning_score_data.py
+│   │       │   ├── active_learning_score_types_v2_data.py
+│   │       │   ├── active_learning_score_v2_data.py
+│   │       │   ├── annotation_savings.py
+│   │       │   ├── api_error_code.py
+│   │       │   ├── api_error_response.py
+│   │       │   ├── async_task_data.py
+│   │       │   ├── auth0_on_sign_up_request_user.py
+│   │       │   ├── auth0_on_sign_up_request.py
+│   │       │   ├── auto_task_base.py
+│   │       │   ├── auto_task_crop_all_of.py
+│   │       │   ├── auto_task_crop.py
+│   │       │   ├── auto_task_tiling_all_of.py
+│   │       │   ├── auto_task_tiling.py
+│   │       │   ├── auto_task.py
+│   │       │   ├── categorical_distribution_metrics.py
+│   │       │   ├── categorical_distribution_per_set.py
+│   │       │   ├── categorical_distribution.py
+│   │       │   ├── configuration_data.py
+│   │       │   ├── configuration_entry.py
+│   │       │   ├── configuration_set_request.py
+│   │       │   ├── configuration_value_data_type.py
+│   │       │   ├── consent.py
+│   │       │   ├── create_cf_bucket_activity_request.py
+│   │       │   ├── create_docker_worker_registry_entry_request.py
+│   │       │   ├── create_entity_response.py
+│   │       │   ├── create_sample_with_write_urls_response.py
+│   │       │   ├── create_team_membership_request.py
+│   │       │   ├── creator.py
+│   │       │   ├── crop_data.py
+│   │       │   ├── dataset_analysis.py
+│   │       │   ├── dataset_create_request.py
+│   │       │   ├── dataset_creator.py
+│   │       │   ├── dataset_data_enriched.py
+│   │       │   ├── dataset_data.py
+│   │       │   ├── dataset_embedding_data.py
+│   │       │   ├── dataset_information.py
+│   │       │   ├── dataset_sizes.py
+│   │       │   ├── dataset_type.py
+│   │       │   ├── dataset_update_request.py
+│   │       │   ├── datasource_config_azure_all_of.py
+│   │       │   ├── datasource_config_azure.py
+│   │       │   ├── datasource_config_base_full_path.py
+│   │       │   ├── datasource_config_base.py
+│   │       │   ├── datasource_config_gcs_all_of.py
+│   │       │   ├── datasource_config_gcs.py
+│   │       │   ├── datasource_config_lightly.py
+│   │       │   ├── datasource_config_local_all_of.py
+│   │       │   ├── datasource_config_local.py
+│   │       │   ├── datasource_config_obs_all_of.py
+│   │       │   ├── datasource_config_obs.py
+│   │       │   ├── datasource_config_s3_all_of.py
+│   │       │   ├── datasource_config_s3_delegated_access_all_of.py
+│   │       │   ├── datasource_config_s3_delegated_access.py
+│   │       │   ├── datasource_config_s3.py
+│   │       │   ├── datasource_config_verify_data_errors.py
+│   │       │   ├── datasource_config_verify_data.py
+│   │       │   ├── datasource_config.py
+│   │       │   ├── datasource_processed_until_timestamp_request.py
+│   │       │   ├── datasource_processed_until_timestamp_response.py
+│   │       │   ├── datasource_purpose.py
+│   │       │   ├── datasource_raw_samples_data_row.py
+│   │       │   ├── datasource_raw_samples_data.py
+│   │       │   ├── datasource_raw_samples_metadata_data_row.py
+│   │       │   ├── datasource_raw_samples_metadata_data.py
+│   │       │   ├── datasource_raw_samples_predictions_data_row.py
+│   │       │   ├── datasource_raw_samples_predictions_data.py
+│   │       │   ├── delegated_access_external_ids_inner.py
+│   │       │   ├── detection_frame_prediction.py
+│   │       │   ├── detection_task_information.py
+│   │       │   ├── dimensionality_reduction_method.py
+│   │       │   ├── divide_and_conquer_cursor_data.py
+│   │       │   ├── docker_authorization_request.py
+│   │       │   ├── docker_authorization_response.py
+│   │       │   ├── docker_license_information.py
+│   │       │   ├── docker_run_artifact_create_request.py
+│   │       │   ├── docker_run_artifact_created_data.py
+│   │       │   ├── docker_run_artifact_data.py
+│   │       │   ├── docker_run_artifact_storage_location.py
+│   │       │   ├── docker_run_artifact_type.py
+│   │       │   ├── docker_run_create_request.py
+│   │       │   ├── docker_run_data.py
+│   │       │   ├── docker_run_log_create_entry_data.py
+│   │       │   ├── docker_run_log_data.py
+│   │       │   ├── docker_run_log_docker_load.py
+│   │       │   ├── docker_run_log_entry_data_base.py
+│   │       │   ├── docker_run_log_entry_data.py
+│   │       │   ├── docker_run_log_level.py
+│   │       │   ├── docker_run_scheduled_create_request.py
+│   │       │   ├── docker_run_scheduled_data.py
+│   │       │   ├── docker_run_scheduled_priority.py
+│   │       │   ├── docker_run_scheduled_state.py
+│   │       │   ├── docker_run_scheduled_update_request.py
+│   │       │   ├── docker_run_state.py
+│   │       │   ├── docker_run_update_request.py
+│   │       │   ├── docker_task_description.py
+│   │       │   ├── docker_user_stats.py
+│   │       │   ├── docker_worker_authorization_request.py
+│   │       │   ├── docker_worker_config_create_request.py
+│   │       │   ├── docker_worker_config_omni_v2_create_request_all_of.py
+│   │       │   ├── docker_worker_config_omni_v2_create_request.py
+│   │       │   ├── docker_worker_config_omni_v3_create_request_all_of.py
+│   │       │   ├── docker_worker_config_omni_v3_create_request.py
+│   │       │   ├── docker_worker_config_omni_v4_create_request_all_of.py
+│   │       │   ├── docker_worker_config_omni_v4_create_request.py
+│   │       │   ├── docker_worker_config_omni_vx_create_request_base.py
+│   │       │   ├── docker_worker_config_omni_vx_create_request.py
+│   │       │   ├── docker_worker_config_v0_data_all_of.py
+│   │       │   ├── docker_worker_config_v0_data.py
+│   │       │   ├── docker_worker_config_v2_create_request.py
+│   │       │   ├── docker_worker_config_v2_data_all_of.py
+│   │       │   ├── docker_worker_config_v2_data.py
+│   │       │   ├── docker_worker_config_v2_docker_datasource.py
+│   │       │   ├── docker_worker_config_v2_docker_object_level.py
+│   │       │   ├── docker_worker_config_v2_docker_stopping_condition.py
+│   │       │   ├── docker_worker_config_v2_docker.py
+│   │       │   ├── docker_worker_config_v2_lightly_collate.py
+│   │       │   ├── docker_worker_config_v2_lightly_model.py
+│   │       │   ├── docker_worker_config_v2_lightly_trainer.py
+│   │       │   ├── docker_worker_config_v2_lightly.py
+│   │       │   ├── docker_worker_config_v2.py
+│   │       │   ├── docker_worker_config_v3_create_request.py
+│   │       │   ├── docker_worker_config_v3_data_all_of.py
+│   │       │   ├── docker_worker_config_v3_data.py
+│   │       │   ├── docker_worker_config_v3_datasource_input_expiration.py
+│   │       │   ├── docker_worker_config_v3_docker_corruptness_check.py
+│   │       │   ├── docker_worker_config_v3_docker_datasource.py
+│   │       │   ├── docker_worker_config_v3_docker_training.py
+│   │       │   ├── docker_worker_config_v3_docker.py
+│   │       │   ├── docker_worker_config_v3_lightly_checkpoint_callback.py
+│   │       │   ├── docker_worker_config_v3_lightly_collate.py
+│   │       │   ├── docker_worker_config_v3_lightly_criterion.py
+│   │       │   ├── docker_worker_config_v3_lightly_loader.py
+│   │       │   ├── docker_worker_config_v3_lightly_model.py
+│   │       │   ├── docker_worker_config_v3_lightly_optimizer.py
+│   │       │   ├── docker_worker_config_v3_lightly_trainer.py
+│   │       │   ├── docker_worker_config_v3_lightly.py
+│   │       │   ├── docker_worker_config_v3.py
+│   │       │   ├── docker_worker_config_v4_data_all_of.py
+│   │       │   ├── docker_worker_config_v4_data.py
+│   │       │   ├── docker_worker_config_v4_docker_crops.py
+│   │       │   ├── docker_worker_config_v4_docker.py
+│   │       │   ├── docker_worker_config_v4.py
+│   │       │   ├── docker_worker_config_vx_data_base.py
+│   │       │   ├── docker_worker_config_vx_data.py
+│   │       │   ├── docker_worker_config.py
+│   │       │   ├── docker_worker_registry_entry_data.py
+│   │       │   ├── docker_worker_state.py
+│   │       │   ├── docker_worker_type.py
+│   │       │   ├── embedding_data.py
+│   │       │   ├── embedding_data2_d.py
+│   │       │   ├── embedding_information.py
+│   │       │   ├── embedding2d_create_request.py
+│   │       │   ├── embedding2d_data.py
+│   │       │   ├── expiry_handling_strategy_v3.py
+│   │       │   ├── file_name_format.py
+│   │       │   ├── file_output_format.py
+│   │       │   ├── filename_and_read_url.py
+│   │       │   ├── general_information.py
+│   │       │   ├── image_type.py
+│   │       │   ├── initial_tag_create_request.py
+│   │       │   ├── internal_debug_latency_mongodb.py
+│   │       │   ├── internal_debug_latency.py
+│   │       │   ├── job_result_type.py
+│   │       │   ├── job_state.py
+│   │       │   ├── job_status_data_result.py
+│   │       │   ├── job_status_data.py
+│   │       │   ├── job_status_meta.py
+│   │       │   ├── job_status_upload_method.py
+│   │       │   ├── jobs_data.py
+│   │       │   ├── label_box_data_row.py
+│   │       │   ├── label_box_v4_data_row.py
+│   │       │   ├── label_studio_task_data.py
+│   │       │   ├── label_studio_task.py
+│   │       │   ├── lightly_docker_selection_method.py
+│   │       │   ├── lightly_model_v2.py
+│   │       │   ├── lightly_model_v3.py
+│   │       │   ├── lightly_trainer_precision_v2.py
+│   │       │   ├── lightly_trainer_precision_v3.py
+│   │       │   ├── metadata_information.py
+│   │       │   ├── numeric_distribution_metrics.py
+│   │       │   ├── numeric_distribution_per_set.py
+│   │       │   ├── numeric_distribution.py
+│   │       │   ├── object_detection_prediction.py
+│   │       │   ├── prediction_singleton_base.py
+│   │       │   ├── prediction_singleton_classification_all_of.py
+│   │       │   ├── prediction_singleton_classification.py
+│   │       │   ├── prediction_singleton_instance_segmentation_all_of.py
+│   │       │   ├── prediction_singleton_instance_segmentation.py
+│   │       │   ├── prediction_singleton_keypoint_detection_all_of.py
+│   │       │   ├── prediction_singleton_keypoint_detection.py
+│   │       │   ├── prediction_singleton_object_detection_all_of.py
+│   │       │   ├── prediction_singleton_object_detection.py
+│   │       │   ├── prediction_singleton_semantic_segmentation_all_of.py
+│   │       │   ├── prediction_singleton_semantic_segmentation.py
+│   │       │   ├── prediction_singleton.py
+│   │       │   ├── prediction_task_information.py
+│   │       │   ├── prediction_task_schema_base.py
+│   │       │   ├── prediction_task_schema_category_keypoints_all_of.py
+│   │       │   ├── prediction_task_schema_category_keypoints.py
+│   │       │   ├── prediction_task_schema_category.py
+│   │       │   ├── prediction_task_schema_keypoint_all_of.py
+│   │       │   ├── prediction_task_schema_keypoint.py
+│   │       │   ├── prediction_task_schema_simple_all_of.py
+│   │       │   ├── prediction_task_schema_simple.py
+│   │       │   ├── prediction_task_schema.py
+│   │       │   ├── prediction_task_schemas.py
+│   │       │   ├── profile_basic_data.py
+│   │       │   ├── profile_me_data_settings.py
+│   │       │   ├── profile_me_data.py
+│   │       │   ├── questionnaire_data.py
+│   │       │   ├── report_v2.py
+│   │       │   ├── run_information.py
+│   │       │   ├── s3_region.py
+│   │       │   ├── sama_task_data.py
+│   │       │   ├── sama_task.py
+│   │       │   ├── sample_create_request.py
+│   │       │   ├── sample_data_modes.py
+│   │       │   ├── sample_data.py
+│   │       │   ├── sample_meta_data.py
+│   │       │   ├── sample_partial_mode.py
+│   │       │   ├── sample_sort_by.py
+│   │       │   ├── sample_type.py
+│   │       │   ├── sample_update_request.py
+│   │       │   ├── sample_write_urls.py
+│   │       │   ├── sampling_config_stopping_condition.py
+│   │       │   ├── sampling_config.py
+│   │       │   ├── sampling_create_request.py
+│   │       │   ├── sampling_method.py
+│   │       │   ├── scatter_plot_data.py
+│   │       │   ├── scatter_plot_example_image.py
+│   │       │   ├── sector.py
+│   │       │   ├── selected_and_removed_image_pair.py
+│   │       │   ├── selection_config_all_of.py
+│   │       │   ├── selection_config_base.py
+│   │       │   ├── selection_config_entry_input.py
+│   │       │   ├── selection_config_entry_strategy.py
+│   │       │   ├── selection_config_entry.py
+│   │       │   ├── selection_config_v3_all_of.py
+│   │       │   ├── selection_config_v3_entry_input.py
+│   │       │   ├── selection_config_v3_entry_strategy_all_of_target_range.py
+│   │       │   ├── selection_config_v3_entry_strategy_all_of.py
+│   │       │   ├── selection_config_v3_entry_strategy.py
+│   │       │   ├── selection_config_v3_entry.py
+│   │       │   ├── selection_config_v3.py
+│   │       │   ├── selection_config_v4_all_of.py
+│   │       │   ├── selection_config_v4_entry_input.py
+│   │       │   ├── selection_config_v4_entry_strategy_all_of.py
+│   │       │   ├── selection_config_v4_entry_strategy.py
+│   │       │   ├── selection_config_v4_entry.py
+│   │       │   ├── selection_config_v4.py
+│   │       │   ├── selection_config.py
+│   │       │   ├── selection_input_predictions_name.py
+│   │       │   ├── selection_input_type.py
+│   │       │   ├── selection_strategy_threshold_operation.py
+│   │       │   ├── selection_strategy_type_v3.py
+│   │       │   ├── selection_strategy_type.py
+│   │       │   ├── service_account_basic_data.py
+│   │       │   ├── set_embeddings_is_processed_flag_by_id_body_request.py
+│   │       │   ├── shared_access_config_create_request.py
+│   │       │   ├── shared_access_config_data.py
+│   │       │   ├── shared_access_type.py
+│   │       │   ├── tag_active_learning_scores_data.py
+│   │       │   ├── tag_arithmetics_operation.py
+│   │       │   ├── tag_arithmetics_request.py
+│   │       │   ├── tag_arithmetics_response.py
+│   │       │   ├── tag_bit_mask_response.py
+│   │       │   ├── tag_change_data_arithmetics.py
+│   │       │   ├── tag_change_data_initial.py
+│   │       │   ├── tag_change_data_metadata.py
+│   │       │   ├── tag_change_data_operation_method.py
+│   │       │   ├── tag_change_data_rename.py
+│   │       │   ├── tag_change_data_sampler.py
+│   │       │   ├── tag_change_data_samples.py
+│   │       │   ├── tag_change_data_scatterplot.py
+│   │       │   ├── tag_change_data_upsize.py
+│   │       │   ├── tag_change_data.py
+│   │       │   ├── tag_change_entry.py
+│   │       │   ├── tag_create_request.py
+│   │       │   ├── tag_creator.py
+│   │       │   ├── tag_data.py
+│   │       │   ├── tag_update_request.py
+│   │       │   ├── tag_upsize_request.py
+│   │       │   ├── task_annotation_savings.py
+│   │       │   ├── task_type.py
+│   │       │   ├── team_basic_data.py
+│   │       │   ├── team_data.py
+│   │       │   ├── team_role.py
+│   │       │   ├── trigger2d_embedding_job_request.py
+│   │       │   ├── update_docker_worker_registry_entry_request.py
+│   │       │   ├── update_team_membership_request.py
+│   │       │   ├── usage.py
+│   │       │   ├── user_type.py
+│   │       │   ├── video_frame_data.py
+│   │       │   ├── worker_information.py
+│   │       │   └── write_csv_url_data.py
+│   │       └── rest.py
+│   ├── transforms
+│   │   ├── __init__.py
+│   │   ├── add_grid_transform.py
+│   │   ├── aim_transform.py
+│   │   ├── amplitude_rescale_transform.py
+│   │   ├── byol_transform.py
+│   │   ├── densecl_transform.py
+│   │   ├── detcon_transform.py
+│   │   ├── dino_transform.py
+│   │   ├── fast_siam_transform.py
+│   │   ├── fda_transform.py
+│   │   ├── gaussian_blur.py
+│   │   ├── gaussian_mixture_masks_transform.py
+│   │   ├── ibot_transform.py
+│   │   ├── ijepa_transform.py
+│   │   ├── image_grid_transform.py
+│   │   ├── irfft2d_transform.py
+│   │   ├── jigsaw.py
+│   │   ├── mae_transform.py
+│   │   ├── mmcr_transform.py
+│   │   ├── moco_transform.py
+│   │   ├── msn_transform.py
+│   │   ├── multi_crop_transform.py
+│   │   ├── multi_view_transform_v2.py
+│   │   ├── multi_view_transform.py
+│   │   ├── phase_shift_transform.py
+│   │   ├── pirl_transform.py
+│   │   ├── py.typed
+│   │   ├── random_crop_and_flip_with_grid.py
+│   │   ├── random_frequency_mask_transform.py
+│   │   ├── rfft2d_transform.py
+│   │   ├── rotation.py
+│   │   ├── simclr_transform.py
+│   │   ├── simsiam_transform.py
+│   │   ├── smog_transform.py
+│   │   ├── solarize.py
+│   │   ├── swav_transform.py
+│   │   ├── tico_transform.py
+│   │   ├── torchvision_v2_compatibility.py
+│   │   ├── utils.py
+│   │   ├── vicreg_transform.py
+│   │   ├── vicregl_transform.py
+│   │   └── wmse_transform.py
+│   └── utils
+│       ├── __init__.py
+│       ├── benchmarking
+│       │   ├── __init__.py
+│       │   ├── benchmark_module.py
+│       │   ├── knn_classifier.py
+│       │   ├── knn.py
+│       │   ├── linear_classifier.py
+│       │   ├── metric_callback.py
+│       │   ├── online_linear_classifier.py
+│       │   └── topk.py
+│       ├── bounding_box.py
+│       ├── cropping
+│       │   ├── __init__.py
+│       │   ├── crop_image_by_bounding_boxes.py
+│       │   └── read_yolo_label_file.py
+│       ├── debug.py
+│       ├── dependency.py
+│       ├── dist.py
+│       ├── embeddings_2d.py
+│       ├── hipify.py
+│       ├── io.py
+│       ├── lars.py
+│       ├── optim.py
+│       ├── reordering.py
+│       ├── scheduler.py
+│       └── version_compare.py
+├── MAINTAINING.md
+├── Makefile
+├── MANIFEST.in
+├── pylintrc
+├── pyproject.toml
+├── README.md
+├── requirements
+│   ├── base.txt
+│   ├── openapi.txt
+│   └── README.md
+├── setup.py
+├── tests
+│   ├── __init__.py
+│   ├── api
+│   │   ├── test_BitMask.py
+│   │   ├── test_download.py
+│   │   ├── test_patch.py
+│   │   ├── test_rest_parser.py
+│   │   ├── test_retry_utils.py
+│   │   ├── test_serve.py
+│   │   ├── test_swagger_api_client.py
+│   │   ├── test_swagger_rest_client.py
+│   │   ├── test_utils.py
+│   │   └── test_version_checking.py
+│   ├── api_workflow
+│   │   ├── __init__.py
+│   │   ├── mocked_api_workflow_client.py
+│   │   ├── test_api_workflow_artifacts.py
+│   │   ├── test_api_workflow_client.py
+│   │   ├── test_api_workflow_collaboration.py
+│   │   ├── test_api_workflow_compute_worker.py
+│   │   ├── test_api_workflow_datasets.py
+│   │   ├── test_api_workflow_datasource_listing.py
+│   │   ├── test_api_workflow_datasources.py
+│   │   ├── test_api_workflow_download_dataset.py
+│   │   ├── test_api_workflow_export.py
+│   │   ├── test_api_workflow_predictions.py
+│   │   ├── test_api_workflow_selection.py
+│   │   ├── test_api_workflow_tags.py
+│   │   ├── test_api_workflow_upload_custom_metadata.py
+│   │   ├── test_api_workflow_upload_embeddings.py
+│   │   ├── test_api_workflow.py
+│   │   └── utils.py
+│   ├── cli
+│   │   ├── test_cli_crop.py
+│   │   ├── test_cli_download.py
+│   │   ├── test_cli_embed.py
+│   │   ├── test_cli_get_lighty_config.py
+│   │   ├── test_cli_magic.py
+│   │   ├── test_cli_train.py
+│   │   └── test_cli_version.py
+│   ├── conftest.py
+│   ├── core
+│   │   └── test_Core.py
+│   ├── data
+│   │   ├── test_data_collate.py
+│   │   ├── test_LightlyDataset.py
+│   │   ├── test_LightlySubset.py
+│   │   ├── test_multi_view_collate.py
+│   │   └── test_VideoDataset.py
+│   ├── embedding
+│   │   ├── test_callbacks.py
+│   │   └── test_embedding.py
+│   ├── helpers.py
+│   ├── loss
+│   │   ├── test_barlow_twins_loss.py
+│   │   ├── test_co2.py
+│   │   ├── test_dcl_loss.py
+│   │   ├── test_detcon_loss.py
+│   │   ├── test_dino_loss.py
+│   │   ├── test_directclr_loss.py
+│   │   ├── test_emp_ssl_loss.py
+│   │   ├── test_hypersphere_loss.py
+│   │   ├── test_ibot_loss.py
+│   │   ├── test_koleo_loss.py
+│   │   ├── test_macl_loss.py
+│   │   ├── test_MMCR_loss.py
+│   │   ├── test_msn_loss.py
+│   │   ├── test_negative_cosine_similarity.py
+│   │   ├── test_ntx_ent_loss.py
+│   │   ├── test_pmsn_loss.py
+│   │   ├── test_swav_loss.py
+│   │   ├── test_sym_neg_cos_sim_loss.py
+│   │   ├── test_tico_loss.py
+│   │   ├── test_vicreg_loss.py
+│   │   ├── test_vicregl_loss.py
+│   │   └── test_wmse_loss.py
+│   ├── models
+│   │   ├── __init__.py
+│   │   ├── modules
+│   │   │   ├── __init__.py
+│   │   │   ├── masked_vision_transformer_test.py
+│   │   │   ├── test_center.py
+│   │   │   ├── test_ijepa_timm.py
+│   │   │   ├── test_masked_autoencoder_timm.py
+│   │   │   ├── test_masked_autoencoder.py
+│   │   │   ├── test_masked_vision_transformer_timm.py
+│   │   │   ├── test_masked_vision_transformer_torchvision.py
+│   │   │   └── test_memory_bank.py
+│   │   ├── test_ModelsBYOL.py
+│   │   ├── test_ModelsMoCo.py
+│   │   ├── test_ModelsNNCLR.py
+│   │   ├── test_ModelsSimCLR.py
+│   │   ├── test_ModelsSimSiam.py
+│   │   ├── test_ModelUtils.py
+│   │   └── test_ProjectionHeads.py
+│   ├── REAMDE.md
+│   ├── test_requirements.py
+│   ├── transforms
+│   │   ├── __init__.py
+│   │   ├── test_add_grid_transform.py
+│   │   ├── test_amplitude_rescale_transform.py
+│   │   ├── test_byol_transform.py
+│   │   ├── test_densecl_transform.py
+│   │   ├── test_detcon_transform.py
+│   │   ├── test_dino_transform.py
+│   │   ├── test_fastsiam_transform.py
+│   │   ├── test_fda_transform.py
+│   │   ├── test_gaussian_blur.py
+│   │   ├── test_gaussian_mixture_masks.py
+│   │   ├── test_ibot_transform.py
+│   │   ├── test_irfft2d_transform.py
+│   │   ├── test_jigsaw.py
+│   │   ├── test_location_to_NxN_grid.py
+│   │   ├── test_mae_transform.py
+│   │   ├── test_mmcr_transform.py
+│   │   ├── test_moco_transform.py
+│   │   ├── test_msn_transform.py
+│   │   ├── test_multi_crop_transform.py
+│   │   ├── test_multi_view_transform_v2.py
+│   │   ├── test_multi_view_transform.py
+│   │   ├── test_phase_shift_transform.py
+│   │   ├── test_pirl_transform.py
+│   │   ├── test_random_frequency_mask_transform.py
+│   │   ├── test_rfft2d_transform.py
+│   │   ├── test_rotation.py
+│   │   ├── test_simclr_transform.py
+│   │   ├── test_simsiam_transform.py
+│   │   ├── test_smog_transform.py
+│   │   ├── test_Solarize.py
+│   │   ├── test_swav_transform.py
+│   │   ├── test_torchvision_v2compatibility.py
+│   │   ├── test_vicreg_transform.py
+│   │   ├── test_vicregl_transform.py
+│   │   └── test_wmse_transform.py
+│   ├── UNMOCKED_end2end_tests
+│   │   ├── create_custom_metadata_from_input_dir.py
+│   │   ├── delete_datasets_test_unmocked_cli.py
+│   │   ├── README.md
+│   │   ├── run_all_unmocked_tests.sh
+│   │   └── scripts_for_reproducing_problems
+│   │       └── test_api_latency.py
+│   └── utils
+│       ├── __init__.py
+│       ├── benchmarking
+│       │   ├── __init__.py
+│       │   ├── test_benchmark_module.py
+│       │   ├── test_knn_classifier.py
+│       │   ├── test_knn.py
+│       │   ├── test_linear_classifier.py
+│       │   ├── test_metric_callback.py
+│       │   ├── test_online_linear_classifier.py
+│       │   └── test_topk.py
+│       ├── test_debug.py
+│       ├── test_dist__gather__benchmark_module.py
+│       ├── test_dist__gather__losses.py
+│       ├── test_dist.py
+│       ├── test_embeddings_2d.py
+│       ├── test_io.py
+│       ├── test_optim.py
+│       ├── test_scheduler.py
+│       └── test_version_compare.py
+└── tree.txt
+
+68 directories, 940 files

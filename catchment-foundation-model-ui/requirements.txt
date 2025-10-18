@@ -1,0 +1,8 @@
+lightly
+timm
+flask
+tifffile
+numpy
+imagecodecs
+torch
+torchvision

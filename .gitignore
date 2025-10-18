@@ -1,0 +1,38 @@
+# Python / project
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+dist/
+build/
+
+# Environment
+env/
+venv/
+.venv/
+.env
+.env.local
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Large model files (do NOT commit)
+*.pth
+*.pt
+*.ckpt
+
+# Archives
+*.zip
+*.tar.gz
+
+# Others
+.cache/

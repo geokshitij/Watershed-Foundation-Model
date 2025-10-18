@@ -1,0 +1,353 @@
+from __future__ import annotations
+
+import contextlib
+import io
+import os
+import shutil
+import tempfile
+import unittest
+from fractions import Fraction
+from typing import Any
+from unittest import mock
+
+import PIL
+import torch
+import torchvision
+
+from lightly.data import LightlyDataset, NonIncreasingTimestampError
+from lightly.data._video import (
+    VideoDataset,
+    _find_non_increasing_timestamps,
+    _make_dataset,
+)
+
+try:
+    import av
+
+    PYAV_AVAILABLE = True
+except ModuleNotFoundError:
+    PYAV_AVAILABLE = False
+
+VIDEO_READER_AVAILABLE = torchvision.io._HAS_VIDEO_OPT
+VIDEO_BACKENDS = ["pyav", "video_reader"]
+DEFAULT_BACKEND = "pyav"
+
+
+@unittest.skipUnless(
+    PYAV_AVAILABLE or VIDEO_READER_AVAILABLE, "No video backend available"
+)
+class TestVideoDataset(unittest.TestCase):
+    def tearDown(self) -> None:
+        # Make sure to set the default backend to not interfere with other tests.
+        torchvision.set_video_backend(DEFAULT_BACKEND)
+
+    def ensure_dir(self, path_to_folder: str) -> None:
+        if not os.path.exists(path_to_folder):
+            os.makedirs(path_to_folder)
+
+    def create_dataset_specified_frames_per_video(
+        self, frames_per_video: list[int], w: int = 32, h: int = 32, c: int = 3
+    ) -> None:
+        self.input_dir = tempfile.mkdtemp()
+        self.ensure_dir(self.input_dir)
+        self.frames_over_videos = [
+            torch.randint(low=0, high=256, size=(frames, h, w, c), dtype=torch.uint8)
+            for frames in frames_per_video
+        ]
+
+        self.extensions = ".avi"
+
+        for frames in self.frames_over_videos:
+            path = os.path.join(self.input_dir, f"output-{len(frames):03}.avi")
+            print(path)
+            torchvision.io.write_video(
+                filename=path, video_array=frames, fps=1, video_codec="rawvideo"
+            )
+
+    def create_dataset(
+        self,
+        n_videos: int = 5,
+        n_frames_per_video: int = 10,
+        w: int = 32,
+        h: int = 32,
+        c: int = 3,
+    ) -> None:
+        self.n_videos = n_videos
+        self.n_frames_per_video = n_frames_per_video
+
+        self.input_dir = tempfile.mkdtemp()
+        self.ensure_dir(self.input_dir)
+        self.frames = torch.randint(
+            low=0, high=256, size=(n_frames_per_video, h, w, c), dtype=torch.uint8
+        )
+        self.extensions = ".avi"
+
+        for i in range(n_videos):
+            path = os.path.join(self.input_dir, f"output-{i}.avi")
+            print(path)
+            torchvision.io.write_video(
+                filename=path, video_array=self.frames, fps=1, video_codec="rawvideo"
+            )
+
+    @unittest.skipUnless(
+        PYAV_AVAILABLE and VIDEO_READER_AVAILABLE,
+        "pyav and video_reader backends must be both available",
+    )
+    def test_video_similar_timestamps_for_different_backends(self) -> None:
+        frames_per_video = list(range(1, 10))
+        self.create_dataset_specified_frames_per_video(frames_per_video)
+
+        timestamps = []
+        offsets = []
+        backends = []
+        instances = []
+
+        # iterate through different backends
+        for backend in VIDEO_BACKENDS:
+            torchvision.set_video_backend(backend)
+
+            video_instances, video_timestamps, video_offsets, _ = _make_dataset(
+                self.input_dir, extensions=self.extensions
+            )
+            timestamps.append(video_timestamps)
+            offsets.append(video_offsets)
+            backends.append(backend)
+            instances.append(video_instances)
+
+        # make sure backends don't match (sanity check)
+        self.assertNotEqual(backends[0], backends[1])
+
+        # we expect the same timestamps and offsets
+        self.assertEqual(timestamps[0], timestamps[1])
+        self.assertEqual(offsets[0], offsets[1])
+
+        expected_frame_counts = [int(filename[-7:-4]) for filename in instances[0]]
+        # calculate expected offsets with old (slow) implementation
+        expected_offsets = [0] + expected_frame_counts[:-1]
+        for i in range(1, len(expected_offsets)):
+            expected_offsets[i] = expected_offsets[i - 1] + expected_offsets[i]
+        self.assertEqual(expected_offsets, offsets[0])
+
+        shutil.rmtree(self.input_dir)
+
+    def test_video_dataset_tqdm_args(self) -> None:
+        self.create_dataset()
+        desc = "test_video_dataset_tqdm_args description asdf"
+        f = io.StringIO()
+        with contextlib.redirect_stderr(f):
+            dataset = VideoDataset(
+                self.input_dir,
+                extensions=self.extensions,
+                tqdm_args={
+                    "desc": desc,
+                },
+            )
+        shutil.rmtree(self.input_dir)
+        printed = f.getvalue()
+        self.assertTrue(desc in printed)
+
+    def test_video_dataset_init_dataloader(self) -> None:
+        self.create_dataset()
+        dataset_4_workers = LightlyDataset(
+            self.input_dir, num_workers_video_frame_counting=4
+        )
+        dataset_0_workers = LightlyDataset(
+            self.input_dir, num_workers_video_frame_counting=0
+        )
+        self.assertListEqual(
+            dataset_0_workers.get_filenames(), dataset_4_workers.get_filenames()
+        )
+        self.assertListEqual(
+            dataset_0_workers.dataset.offsets, dataset_4_workers.dataset.offsets
+        )
+        for timestamps_0_workers, timestamps_4_workers in zip(
+            dataset_0_workers.dataset.video_timestamps,
+            dataset_4_workers.dataset.video_timestamps,
+        ):
+            self.assertListEqual(timestamps_0_workers, timestamps_4_workers)
+        self.assertTupleEqual(
+            dataset_0_workers.dataset.fps, dataset_4_workers.dataset.fps
+        )
+
+    @unittest.skipUnless(PYAV_AVAILABLE, "PyAV unavailable")
+    def test_video_dataset_from_folder__pyav(self) -> None:
+        torchvision.set_video_backend("pyav")
+        self._test_video_dataset_from_folder()
+
+    @unittest.skipUnless(VIDEO_READER_AVAILABLE, "video_reader unavailable")
+    def test_video_dataset_from_folder__video_reader(self) -> None:
+        torchvision.set_video_backend("video_reader")
+        self._test_video_dataset_from_folder()
+
+    def _test_video_dataset_from_folder(self) -> None:
+        self.create_dataset()
+
+        # create dataset
+        dataset = VideoDataset(self.input_dir, extensions=self.extensions)
+
+        # __len__
+        self.assertEqual(len(dataset), self.n_frames_per_video * self.n_videos)
+
+        # __getitem__
+        for i in range(len(dataset)):
+            frame, label = dataset[i]
+            self.assertIsInstance(frame, PIL.Image.Image)
+            self.assertEqual(label, i // self.n_frames_per_video)
+
+        # get_filename
+        for i in range(len(dataset)):
+            frame, label = dataset[i]
+            filename = dataset.get_filename(i)
+            print(filename)
+            self.assertTrue(
+                filename.endswith(f"-{(i % self.n_frames_per_video):02d}-avi.png")
+            )
+
+        shutil.rmtree(self.input_dir)
+
+    def test_video_dataset_no_read_rights(self) -> None:
+        n_videos = 7
+        self.create_dataset(n_videos=n_videos)
+
+        with self.subTest("no read rights files"):
+            for subdir, dirs, files in os.walk(self.input_dir):
+                for filename in files:
+                    filepath = os.path.join(self.input_dir, filename)
+                    os.chmod(filepath, 0o000)
+            # This will not raise any Permissions error, as they are caught by torchvision:
+            # https://github.com/pytorch/vision/blob/5985504cc32011fbd4312600b4492d8ae0dd13b4/torchvision/io/video.py#L397
+            dataset = LightlyDataset(self.input_dir)
+            self.assertEqual(len(dataset), 0)
+
+        with self.subTest("no read rights subdirs"):
+            for subdir, dirs, files in os.walk(self.input_dir):
+                os.chmod(subdir, 0o000)
+            with self.assertRaises(PermissionError):
+                dataset = LightlyDataset(self.input_dir)
+
+        with self.subTest("no read rights root"):
+            os.chmod(self.input_dir, 0o000)
+            with self.assertRaises(PermissionError):
+                dataset = LightlyDataset(self.input_dir)
+
+    @unittest.skipUnless(PYAV_AVAILABLE, "PyAV unavailable")
+    def test_video_dataset_non_increasing_timestamps__pyav(self) -> None:
+        torchvision.set_video_backend("pyav")
+        self._test_video_dataset_non_increasing_timestamps()
+
+    @unittest.skipUnless(VIDEO_READER_AVAILABLE, "video_reader unavailable")
+    def test_video_dataset_non_increasing_timestamps__video_reader(self) -> None:
+        torchvision.set_video_backend("video_reader")
+        self._test_video_dataset_non_increasing_timestamps()
+
+    def _test_video_dataset_non_increasing_timestamps(self) -> None:
+        self.create_dataset(n_videos=2, n_frames_per_video=5)
+
+        # overwrite the _make_dataset function to return a wrong timestamp
+        def _make_dataset_with_non_increasing_timestamps(
+            *args: tuple[
+                str, tuple[str] | None, bool | None, str, dict[str, Any] | None, int
+            ],
+            **kwargs: dict[str, Any],
+        ) -> tuple[list[str], list[int], list[int], list[int]]:
+            video_instances, timestamps, offsets, fpss = _make_dataset(*args, **kwargs)
+            print(video_instances, timestamps, offsets, fpss)
+            # set timestamp of 4th frame in 1st video to timestamp of 2nd frame.
+            timestamps[0][3] = timestamps[0][1]
+            return video_instances, timestamps, offsets, fpss
+
+        with mock.patch(
+            "lightly.data._video._make_dataset",
+            _make_dataset_with_non_increasing_timestamps,
+        ):
+            # getting frame at wrong timestamp should throw an exception
+            dataset = VideoDataset(self.input_dir, extensions=self.extensions)
+            for i in range(len(dataset)):
+                if i == 3:
+                    # frame with wrong timestamp
+                    with self.assertRaises(NonIncreasingTimestampError):
+                        dataset[i]
+                else:
+                    dataset[i]
+
+            # Getting frame at wrong timestamp should throw an exception
+            # from dataloader but not break the dataloader itself. Future
+            # calls to next() should still work.
+            dataloader = torch.utils.data.DataLoader(
+                dataset, num_workers=2, batch_size=None, collate_fn=lambda x: x
+            )
+            dataloader_iter = iter(dataloader)
+            for i in range(len(dataset)):
+                if i == 3:
+                    # frame with wrong timestamp
+                    with self.assertRaises(NonIncreasingTimestampError):
+                        next(dataloader_iter)
+                else:
+                    next(dataloader_iter)
+
+            # disable exception, should be able to load all frames
+            dataset.exception_on_non_increasing_timestamp = False
+            total_frames = 0
+            for _ in dataset:
+                total_frames += 1
+            self.assertEqual(total_frames, len(dataset))
+
+    @unittest.skipUnless(PYAV_AVAILABLE, "PyAV unavailable")
+    def test_video_dataset_dataloader__pyav(self) -> None:
+        torchvision.set_video_backend("pyav")
+        self._test_video_dataset_dataloader()
+
+    @unittest.skipUnless(VIDEO_READER_AVAILABLE, "video_reader unavailable")
+    def test_video_dataset_dataloader__video_reader(self) -> None:
+        torchvision.set_video_backend("video_reader")
+        self._test_video_dataset_dataloader()
+
+    def _test_video_dataset_dataloader(self) -> None:
+        self.create_dataset()
+        dataset = VideoDataset(self.input_dir, extensions=self.extensions)
+        dataloader = torch.utils.data.DataLoader(
+            dataset,
+            num_workers=2,
+            batch_size=3,
+            shuffle=True,
+            collate_fn=lambda x: x,
+        )
+        for batch in dataloader:
+            pass
+
+    def test_find_non_increasing_timestamps(self) -> None:
+        # no timestamps
+        non_increasing = _find_non_increasing_timestamps([])
+        self.assertListEqual(non_increasing, [])
+
+        # single timestamp
+        timestamps = [Fraction(0, 1)]
+        expected = [False]
+        non_increasing = _find_non_increasing_timestamps(timestamps)
+        self.assertListEqual(non_increasing, expected)
+
+        # all timestamps increasing
+        timestamps = [Fraction(0, 1), Fraction(1, 1), Fraction(2, 1)]
+        expected = [False, False, False]
+        non_increasing = _find_non_increasing_timestamps(timestamps)
+        self.assertListEqual(non_increasing, expected)
+
+        # all timestamps equal
+        timestamps = [Fraction(0, 1), Fraction(0, 1), Fraction(0, 1)]
+        expected = [False, True, True]
+        non_increasing = _find_non_increasing_timestamps(timestamps)
+        self.assertListEqual(non_increasing, expected)
+
+        # some timestamps equal and some decreasing
+        timestamps = [
+            Fraction(-1, 1),
+            Fraction(0, 1),
+            Fraction(1, 1),
+            Fraction(2, 3),
+            Fraction(2, 3),
+            Fraction(2, 1),
+            Fraction(3, 2),
+        ]
+        expected = [False, False, False, True, True, False, True]
+        non_increasing = _find_non_increasing_timestamps(timestamps)
+        self.assertListEqual(non_increasing, expected)
