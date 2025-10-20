@@ -1,6 +1,7 @@
 import io
 import os
 import sys
+import json
 import threading
 import traceback
 from contextlib import redirect_stdout
@@ -17,7 +18,6 @@ try:
     import tifffile
     from lightly.models.modules.masked_vision_transformer_timm import MaskedVisionTransformerTIMM
     from lightly.models.modules.masked_autoencoder_timm import MAEDecoderTIMM
-    from lightly.transforms.mae_transform import MAETransform
     from lightly.models import utils
     from torchvision import transforms as T
 except ImportError as e:
@@ -26,7 +26,19 @@ except ImportError as e:
     print("pip install lightly timm flask tifffile numpy imagecodecs torchvision")
     sys.exit(1)
 
-# --- Part 1: Custom Dataset (returns metadata) ---
+# --- Part 1: Custom Dataset & Transform ---
+
+class CustomCatchmentTransform:
+    """A custom transform for TIFF data that only resizes and normalizes."""
+    def __init__(self, image_size, norm_mean, norm_std):
+        self.transform = T.Compose([
+            T.Resize(size=(image_size, image_size), interpolation=T.InterpolationMode.BICUBIC, antialias=True),
+            T.Normalize(mean=norm_mean, std=norm_std),
+        ])
+
+    def __call__(self, image_tensor):
+        # Wrap in a list to match the expected format for multi-view transforms.
+        return [self.transform(image_tensor)]
 
 class TiffCatchmentDataset(Dataset):
     def __init__(self, root_dir, transform=None):
@@ -54,7 +66,7 @@ class TiffCatchmentDataset(Dataset):
         image_tensor = torch.from_numpy(image.astype(np.float32))
         if self.transform:
             image_tensor = self.transform(image_tensor)[0]
-            
+
         metadata = torch.tensor(original_shape, dtype=torch.float32)
         return image_tensor, metadata
 
@@ -69,10 +81,10 @@ class CatchmentMAE(nn.Module):
     def __init__(self, vit_model_name='vit_base_patch16_224', in_chans=1, mask_ratio=0.75):
         super().__init__()
         self.mask_ratio = mask_ratio
-        
+
         vit = timm.create_model(vit_model_name, pretrained=False, in_chans=in_chans)
         self.encoder = MaskedVisionTransformerTIMM(vit=vit)
-        
+
         decoder_embed_dim = 512
         num_patches = self.encoder.vit.patch_embed.num_patches
         self.decoder = MAEDecoderTIMM(
@@ -85,7 +97,7 @@ class CatchmentMAE(nn.Module):
             self.decoder.decoder_pos_embed.shape[-1], int(num_patches ** .5), cls_token=False
         )
         self.decoder.decoder_pos_embed.data.copy_(torch.from_numpy(decoder_pos_embed).float().unsqueeze(0))
-        
+
         self.decoder_embed = nn.Linear(vit.embed_dim, decoder_embed_dim, bias=True)
         self.scale_embed = nn.Sequential(nn.Linear(2, vit.embed_dim), nn.GELU(), nn.Linear(vit.embed_dim, vit.embed_dim))
 
@@ -95,13 +107,10 @@ class CatchmentMAE(nn.Module):
         tokens = tokens + scale_embedding.unsqueeze(1)
         tokens = self.encoder.prepend_prefix_tokens(tokens)
         tokens = self.encoder.add_pos_embed(tokens)
-        
-        # === THIS IS THE FIX ===
-        # If idx_keep is None (inference), process all tokens.
-        # Otherwise (training), process only the kept tokens.
+
         if idx_keep is not None:
             tokens = torch.gather(tokens, dim=1, index=idx_keep.unsqueeze(-1).expand(-1, -1, tokens.shape[-1]))
-        
+
         encoded = self.encoder.vit.norm_pre(tokens)
         encoded = self.encoder.vit.blocks(encoded)
         encoded = self.encoder.vit.norm(encoded)
@@ -119,18 +128,18 @@ class CatchmentMAE(nn.Module):
         batch_size = images.shape[0]
         num_patches = self.encoder.vit.patch_embed.num_patches
         num_masked = int(self.mask_ratio * num_patches)
-        
+
         ids_shuffle = torch.randperm(num_patches, device=images.device).unsqueeze(0).expand(batch_size, -1)
         ids_restore = torch.argsort(ids_shuffle, dim=1)
-        
+
         ids_keep_patches = ids_shuffle[:, :num_patches - num_masked]
         ids_keep_full = torch.cat([torch.zeros(batch_size, 1, device=images.device, dtype=torch.long), ids_keep_patches + 1], dim=1)
-        
+
         latent_full = self.forward_encoder(images, metadata, idx_keep=ids_keep_full)
-        
+
         latent_patches = latent_full[:, 1:, :]
         predictions = self.forward_decoder(latent_patches, ids_restore)
-        
+
         return predictions, ids_restore
 
 # --- Part 3: Training & Inference Logic ---
@@ -142,13 +151,6 @@ def patchify(imgs, patch_size):
     x = torch.einsum('nchpwq->nhwpqc', x)
     x = x.reshape(shape=(imgs.shape[0], h * w, p**2 * imgs.shape[1]))
     return x
-    
-def get_inference_transform(image_size, norm_mean, norm_std):
-    return T.Compose([
-        T.Resize(size=(image_size, image_size), interpolation=T.InterpolationMode.BICUBIC, antialias=True),
-        T.ToTensor(),
-        T.Normalize(mean=norm_mean, std=norm_std),
-    ])
 
 # --- Part 4: Flask Web Application ---
 app = Flask(__name__)
@@ -165,8 +167,12 @@ def run_training_thread(config):
             print("--- Catchment MAE Training Configuration ---")
             for key, value in config.items(): print(f"{key}: {value}")
             print("------------------------------------------\n")
-            normalize_dict = {"mean": config['norm_mean'], "std": config['norm_std']}
-            transform = MAETransform(input_size=config['image_size'], normalize=normalize_dict)
+
+            transform = CustomCatchmentTransform(
+                image_size=config['image_size'],
+                norm_mean=config['norm_mean'],
+                norm_std=config['norm_std']
+            )
             dataset = TiffCatchmentDataset(root_dir=config['input_dir'], transform=transform)
             if len(dataset) == 0: raise RuntimeError("No valid images found.")
             dataloader = DataLoader(dataset, batch_size=config['batch_size'], shuffle=True, num_workers=config['num_workers'], collate_fn=collate_fn_skip_corrupt)
@@ -192,10 +198,17 @@ def run_training_thread(config):
                     num_batches += 1
                 avg_loss = total_loss / num_batches if num_batches > 0 else 0
                 print(f"Epoch {epoch+1}/{config['max_epochs']}, Average Loss: {avg_loss:.4f}")
+
             print("\n--- Training Finished Successfully ---")
-            output_path = 'catchment_foundation_model.pth'
+            output_path = config['model_output_path']
             torch.save(model.state_dict(), output_path)
             print(f"Full MAE model saved to: {output_path}")
+
+            config_path = output_path.replace('.pth', '.json')
+            with open(config_path, 'w') as f:
+                json.dump(config, f, indent=4)
+            print(f"Model configuration saved to: {config_path}")
+
             trained_model_config = config
     except Exception:
         print(f"\n--- AN ERROR OCCURRED ---")
@@ -243,6 +256,11 @@ def index():
                         <input type="text" id="input_dir" name="input_dir" placeholder="/path/to/your/catchments" required>
                     </div>
                     <div class="form-group">
+                        <label for="model_output_path">Model Output Path:</label>
+                        <input type="text" id="model_output_path" name="model_output_path" value="catchment_foundation_model.pth" required>
+                        <small>The trained model will be saved to this file.</small>
+                    </div>
+                    <div class="form-group">
                         <label for="vit_model_name">ViT Model:</label>
                         <select id="vit_model_name" name="vit_model_name">
                             <option value="vit_small_patch16_224" selected>ViT-Small</option>
@@ -260,12 +278,12 @@ def index():
                     </div>
                     <div class="form-group">
                         <label for="norm_mean">Normalization Mean:</label>
-                        <input type="text" id="norm_mean" name="norm_mean" value="0.5" required>
+                        <input type="text" id="norm_mean" name="norm_mean" value="2000.0" required>
                         <small>For 1 channel, use a single number. For 3, use '0.1,0.2,0.3'.</small>
                     </div>
                     <div class="form-group">
                         <label for="norm_std">Normalization Std:</label>
-                        <input type="text" id="norm_std" name="norm_std" value="0.5" required>
+                        <input type="text" id="norm_std" name="norm_std" value="1000.0" required>
                         <small>For 1 channel, use a single number. For 3, use '0.1,0.2,0.3'.</small>
                     </div>
                     <div class="form-group">
@@ -294,9 +312,15 @@ def index():
             <div id="inference-section">
                 <h2>2. Get Embedding from Trained Model</h2>
                 <form id="inference-form">
-                    <div class="form-group">
-                        <label for="image_path">Path to a single TIFF image:</label>
-                        <input type="text" id="image_path" name="image_path" placeholder="/path/to/single/catchment.tif" required>
+                    <div class="grid">
+                        <div class="form-group">
+                            <label for="model_path">Path to trained model (.pth):</label>
+                            <input type="text" id="model_path" name="model_path" placeholder="catchment_foundation_model.pth" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="image_path">Path to a single TIFF image:</label>
+                            <input type="text" id="image_path" name="image_path" placeholder="/path/to/single/catchment.tif" required>
+                        </div>
                     </div>
                     <button type="submit" id="embed-button">Get Embedding</button>
                 </form>
@@ -390,6 +414,7 @@ def train():
     try:
         config = {
             "input_dir": request.form["input_dir"],
+            "model_output_path": request.form["model_output_path"],
             "vit_model_name": request.form["vit_model_name"],
             "image_size": int(request.form["image_size"]),
             "in_chans": int(request.form["in_chans"]),
@@ -402,6 +427,8 @@ def train():
         }
         if len(config['norm_mean']) != config['in_chans'] or len(config['norm_std']) != config['in_chans']:
             raise ValueError("Normalization values must match channel count.")
+        if not config['model_output_path'].endswith('.pth'):
+            raise ValueError("Model output path must end with .pth")
     except (KeyError, ValueError) as e:
         return jsonify({"status": "error", "message": f"Invalid form data: {e}"}), 400
     if not os.path.isdir(config['input_dir']): return jsonify({"status": "error", "message": f"Dataset directory not found: {config['input_dir']}"}), 400
@@ -417,39 +444,48 @@ def status():
 
 @app.route("/embed", methods=["POST"])
 def embed():
-    global trained_model_config
-    if not trained_model_config: return jsonify({"status": "error", "message": "No model trained yet."}), 400
+    model_path = request.form.get("model_path")
     image_path = request.form.get("image_path")
-    if not image_path or not os.path.isfile(image_path): return jsonify({"status": "error", "message": f"Image file not found: {image_path}"}), 400
+
+    if not model_path or not os.path.isfile(model_path):
+        return jsonify({"status": "error", "message": f"Model file not found: {model_path}"}), 400
+    if not image_path or not os.path.isfile(image_path):
+        return jsonify({"status": "error", "message": f"Image file not found: {image_path}"}), 400
+
+    config_path = model_path.replace('.pth', '.json')
+    if not os.path.isfile(config_path):
+        return jsonify({"status": "error", "message": f"Model config file not found: {config_path}"}), 400
+
     try:
-        model = CatchmentMAE(vit_model_name=trained_model_config['vit_model_name'], in_chans=trained_model_config['in_chans'])
-        model.load_state_dict(torch.load('catchment_foundation_model.pth', map_location=torch.device('cpu')))
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        model = CatchmentMAE(
+            vit_model_name=config['vit_model_name'],
+            in_chans=config['in_chans']
+        ).to(device)
+        model.load_state_dict(torch.load(model_path, map_location=device))
         model.eval()
-        
-        normalize_dict = {"mean": trained_model_config['norm_mean'], "std": trained_model_config['norm_std']}
-        inference_transform = get_inference_transform(
-            image_size=trained_model_config['image_size'],
-            norm_mean=normalize_dict['mean'], norm_std=normalize_dict['std']
-        )
-        
+
+        inference_transform = T.Compose([
+            T.Resize(size=(config['image_size'], config['image_size']), interpolation=T.InterpolationMode.BICUBIC, antialias=True),
+            T.Normalize(mean=config['norm_mean'], std=config['norm_std']),
+        ])
+
         image = tifffile.imread(image_path)
         original_shape = image.shape[-2:]
         if image.ndim == 2: image = np.expand_dims(image, axis=0)
         elif image.ndim == 3 and image.shape[2] < image.shape[0]: image = np.transpose(image, (2, 0, 1))
-        
-        image_tensor_for_pil = torch.from_numpy(image.astype(np.float32))
-        if image.max() > 1.0: # Crude check if normalization is needed
-            image_tensor_for_pil = image_tensor_for_pil / 255.0
 
-        image_pil = T.ToPILImage()(image_tensor_for_pil)
-        transformed_image = inference_transform(image_pil).unsqueeze(0)
+        image_tensor = torch.from_numpy(image.astype(np.float32)).unsqueeze(0).to(device)
+        transformed_image = inference_transform(image_tensor)
 
         with torch.no_grad():
-            metadata = torch.tensor(original_shape, dtype=torch.float32).unsqueeze(0)
-            # For inference, we don't mask (idx_keep=None)
+            metadata = torch.tensor(original_shape, dtype=torch.float32).unsqueeze(0).to(device)
             encoded_tokens = model.forward_encoder(transformed_image, metadata, idx_keep=None)
-            embedding = encoded_tokens[:, 0] # The class token is the global representation
-        
+            embedding = encoded_tokens[:, 0]
+
         return jsonify({"status": "success", "embedding": embedding.squeeze().tolist(), "shape": list(embedding.squeeze().shape)})
     except Exception as e:
         return jsonify({"status": "error", "message": traceback.format_exc()}), 500
