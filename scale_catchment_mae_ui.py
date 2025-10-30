@@ -41,12 +41,23 @@ class CustomCatchmentTransform:
         return [self.transform(image_tensor)]
 
 class TiffCatchmentDataset(Dataset):
-    def __init__(self, root_dir, transform=None):
+    """
+    Custom Dataset for TIFF images that handles NoData values by creating a mask.
+    1. Creates a binary mask of valid data vs. NoData padding.
+    2. In-paints the NoData areas with the image's mean to prevent corruption during resizing.
+    3. Returns the clean image, metadata, and the resized binary mask.
+    """
+    def __init__(self, root_dir, transform=None, nodata_value=-9999.0, image_size=224):
         self.root_dir = root_dir
         self.transform = transform
+        self.nodata_value = nodata_value
+        self.image_size = image_size
         self.image_files = [f for f in os.listdir(root_dir) if f.endswith(('.tiff', '.tif'))]
         if not self.image_files:
             raise RuntimeError(f"No .tiff or .tif files found in {root_dir}")
+
+        # Create a separate transform for the mask using Nearest Neighbor interpolation
+        self.mask_transform = T.Resize(size=(image_size, image_size), interpolation=T.InterpolationMode.NEAREST)
 
     def __len__(self):
         return len(self.image_files)
@@ -54,24 +65,39 @@ class TiffCatchmentDataset(Dataset):
     def __getitem__(self, idx):
         img_path = os.path.join(self.root_dir, self.image_files[idx])
         try:
-            image = tifffile.imread(img_path)
-            original_shape = image.shape[-2:] # (H, W)
+            image = tifffile.imread(img_path).astype(np.float32)
+            original_shape = image.shape[-2:]
+
+            # 1. Create a binary mask of valid pixels BEFORE in-painting
+            valid_mask_np = (image != self.nodata_value)
+
+            # 2. In-paint the image to avoid corrupting resize/normalize transforms
+            if valid_mask_np.any():
+                mean_val = image[valid_mask_np].mean()
+                image[~valid_mask_np] = mean_val
+            else: # Handle cases where an image might be all NoData
+                image.fill(0)
+
         except Exception as e:
             print(f"Warning: Could not read file {img_path}. Error: {e}", file=sys.stderr)
-            return None, None
+            return None, None, None # Return three Nones on failure
 
+        # Prepare image tensor
         if image.ndim == 2: image = np.expand_dims(image, axis=0)
-        elif image.ndim == 3 and image.shape[2] < image.shape[0]: image = np.transpose(image, (2, 0, 1))
-
-        image_tensor = torch.from_numpy(image.astype(np.float32))
+        image_tensor = torch.from_numpy(image)
         if self.transform:
             image_tensor = self.transform(image_tensor)[0]
 
+        # Prepare mask tensor
+        mask_tensor = torch.from_numpy(valid_mask_np.astype(np.float32)).unsqueeze(0)
+        mask_tensor = self.mask_transform(mask_tensor)
+
         metadata = torch.tensor(original_shape, dtype=torch.float32)
-        return image_tensor, metadata
+        return image_tensor, metadata, mask_tensor
 
 def collate_fn_skip_corrupt(batch):
-    batch = list(filter(lambda x: x is not None and x[0] is not None, batch))
+    # Filter out samples where any of the three items are None
+    batch = list(filter(lambda x: x is not None and all(item is not None for item in x), batch))
     if not batch: return None
     return torch.utils.data.dataloader.default_collate(batch)
 
@@ -173,7 +199,11 @@ def run_training_thread(config):
                 norm_mean=config['norm_mean'],
                 norm_std=config['norm_std']
             )
-            dataset = TiffCatchmentDataset(root_dir=config['input_dir'], transform=transform)
+            dataset = TiffCatchmentDataset(
+                root_dir=config['input_dir'],
+                transform=transform,
+                image_size=config['image_size']
+            )
             if len(dataset) == 0: raise RuntimeError("No valid images found.")
             dataloader = DataLoader(dataset, batch_size=config['batch_size'], shuffle=True, num_workers=config['num_workers'], collate_fn=collate_fn_skip_corrupt)
             print(f"Found {len(dataset)} images. Starting training...")
@@ -186,15 +216,32 @@ def run_training_thread(config):
                 total_loss, num_batches = 0, 0
                 for batch in dataloader:
                     if batch is None: continue
-                    images, metadata = batch
-                    images, metadata = images.to(device), metadata.to(device)
+                    images, metadata, masks = batch
+                    images, metadata, masks = images.to(device), metadata.to(device), masks.to(device)
+                    
                     predictions, ids_restore = model(images, metadata)
                     target_patches = patchify(images, patch_size)
-                    loss = F.mse_loss(predictions, torch.gather(target_patches, 1, ids_restore.unsqueeze(-1).expand(-1, -1, target_patches.shape[2])))
+
+                    # --- MASKED LOSS CALCULATION ---
+                    # 1. Patchify the mask to match the target patches
+                    mask_patches = patchify(masks, patch_size)
+                    # A patch is valid if more than 50% of its pixels are valid
+                    mask_patches = (mask_patches.mean(dim=-1) > 0.5).float().unsqueeze(-1)
+
+                    # 2. Calculate per-pixel loss without reduction
+                    loss = F.mse_loss(predictions, target_patches, reduction='none')
+
+                    # 3. Apply the mask to zero out loss from invalid (padding) patches
+                    masked_loss = loss * mask_patches
+
+                    # 4. Calculate the final loss as the mean over only the valid patches
+                    final_loss = masked_loss.sum() / (mask_patches.sum() + 1e-8) # Add epsilon for stability
+                    # --- END MASKED LOSS CALCULATION ---
+
                     optimizer.zero_grad()
-                    loss.backward()
+                    final_loss.backward()
                     optimizer.step()
-                    total_loss += loss.item()
+                    total_loss += final_loss.item()
                     num_batches += 1
                 avg_loss = total_loss / num_batches if num_batches > 0 else 0
                 print(f"Epoch {epoch+1}/{config['max_epochs']}, Average Loss: {avg_loss:.4f}")
@@ -278,12 +325,12 @@ def index():
                     </div>
                     <div class="form-group">
                         <label for="norm_mean">Normalization Mean:</label>
-                        <input type="text" id="norm_mean" name="norm_mean" value="2000.0" required>
+                        <input type="text" id="norm_mean" name="norm_mean" value="756.5" required>
                         <small>For 1 channel, use a single number. For 3, use '0.1,0.2,0.3'.</small>
                     </div>
                     <div class="form-group">
                         <label for="norm_std">Normalization Std:</label>
-                        <input type="text" id="norm_std" name="norm_std" value="1000.0" required>
+                        <input type="text" id="norm_std" name="norm_std" value="688.0" required>
                         <small>For 1 channel, use a single number. For 3, use '0.1,0.2,0.3'.</small>
                     </div>
                     <div class="form-group">
@@ -300,7 +347,7 @@ def index():
                     </div>
                     <div class="form-group">
                         <label for="num_workers">Number of Workers:</label>
-                        <input type="number" id="num_workers" name="num_workers" value="4" min="0" required>
+                        <input type="number" id="num_workers" name="num_workers" value="16" min="0" required>
                     </div>
                 </div>
                 <button type="submit" id="train-button">Start Training</button>
@@ -446,6 +493,7 @@ def status():
 def embed():
     model_path = request.form.get("model_path")
     image_path = request.form.get("image_path")
+    nodata_value = -9999.0 # Define NoData value for consistency
 
     if not model_path or not os.path.isfile(model_path):
         return jsonify({"status": "error", "message": f"Model file not found: {model_path}"}), 400
@@ -473,17 +521,28 @@ def embed():
             T.Normalize(mean=config['norm_mean'], std=config['norm_std']),
         ])
 
-        image = tifffile.imread(image_path)
+        # Load and preprocess image, matching the training pipeline
+        image = tifffile.imread(image_path).astype(np.float32)
         original_shape = image.shape[-2:]
-        if image.ndim == 2: image = np.expand_dims(image, axis=0)
-        elif image.ndim == 3 and image.shape[2] < image.shape[0]: image = np.transpose(image, (2, 0, 1))
+        
+        # In-paint NoData values before transforming
+        valid_mask_np = (image != nodata_value)
+        if valid_mask_np.any():
+            mean_val = image[valid_mask_np].mean()
+            image[~valid_mask_np] = mean_val
+        else:
+            image.fill(0)
 
-        image_tensor = torch.from_numpy(image.astype(np.float32)).unsqueeze(0).to(device)
+        if image.ndim == 2: image = np.expand_dims(image, axis=0)
+        
+        image_tensor = torch.from_numpy(image).unsqueeze(0).to(device)
         transformed_image = inference_transform(image_tensor)
 
         with torch.no_grad():
             metadata = torch.tensor(original_shape, dtype=torch.float32).unsqueeze(0).to(device)
+            # Get the full (unmasked) encoding
             encoded_tokens = model.forward_encoder(transformed_image, metadata, idx_keep=None)
+            # The class token embedding is the final representation
             embedding = encoded_tokens[:, 0]
 
         return jsonify({"status": "success", "embedding": embedding.squeeze().tolist(), "shape": list(embedding.squeeze().shape)})
