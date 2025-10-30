@@ -1,5 +1,5 @@
 {
-    "input_dir": "/scratch/kdahal3/DEM_CONUS_30m/Copernicus_DSM_COG_10_N50_00_W125_00_DEM",
+    "input_dir": "/scratch/kdahal3/DEM_CONUS/clipped_huc12_dems",
     "model_output_path": "catchment_foundation_model.pth",
     "vit_model_name": "vit_small_patch16_224",
     "image_size": 224,
@@ -10,8 +10,8 @@
     "norm_std": [
         1000.0
     ],
-    "max_epochs": 50,
+    "max_epochs": 10,
     "batch_size": 32,
     "mask_ratio": 0.75,
-    "num_workers": 4
+    "num_workers": 16
 }

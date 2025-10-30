@@ -1,0 +1,1 @@
+apptainer shell --nv --bind /scratch:/scratch catchment_gpu_venv.sif
