@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+
+* family-names: Dahal
+  given-names: Kshitij
+  affiliation: "Watershed Foundation Model Project"
+  title: "Watershed Foundation Model — Scale-aware Masked Autoencoder for Catchment TIFFs"
+  type: software
+  url: "[https://github.com/geokshitij/Watershed-Foundation-Model](https://github.com/geokshitij/Watershed-Foundation-Model)"
+  date-released: 2025-10-26
+  license: MIT
+  acknowledgements: |
+  This work builds on the open-source Lightly framework ([https://github.com/lightly-ai/lightly](https://github.com/lightly-ai/lightly)) and leverages its masked autoencoder modules for model development.
