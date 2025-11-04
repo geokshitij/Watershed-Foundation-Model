@@ -1,6 +1,0 @@
-DEM_ 5.tif
-DEM_ 1.tif
-DEM_ 0.tif
-DEM_ 4.tif
-DEM_ 6.tif
-DEM_ 7.tif
