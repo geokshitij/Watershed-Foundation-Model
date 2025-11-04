@@ -1,0 +1,20 @@
+{
+    "input_dir": "sample",
+    "output_dir": "catchment_run_1",
+    "vit_model_name": "vit_small_patch16_224",
+    "image_size": 224,
+    "in_chans": 1,
+    "norm_mean": [
+        756.5
+    ],
+    "norm_std": [
+        688.0
+    ],
+    "max_epochs": 50,
+    "batch_size": 16,
+    "mask_ratio": 0.75,
+    "num_workers": 8,
+    "seed": 42,
+    "continue_training": false,
+    "base_name": "catchment_run_1"
+}
