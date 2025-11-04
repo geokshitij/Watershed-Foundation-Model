@@ -306,37 +306,36 @@ def start_training(config, stop_event=None):
             torch.save({'epoch': epoch, 'model_state_dict': model.state_dict(), 'optimizer_state_dict': optimizer.state_dict()}, checkpoint_path)
             print(f"Saved checkpoint for epoch {epoch+1} to {checkpoint_path}")
 
-        print("\n--- Training Finished Successfully ---")
-        
-        print("Running final evaluation on the test set...")
-        model.eval()
-        total_test_loss, num_test_batches = 0, 0
-        with torch.no_grad():
-            for batch in test_dataloader:
-                if batch is None: continue
-                images, metadata, masks = batch
-                images, metadata, masks = images.to(device), metadata.to(device), masks.to(device)
-                predictions, ids_restore = model(images, metadata)
-                target_patches = patchify(images, patch_size)
-                mask_patches = (patchify(masks, patch_size).mean(dim=-1) > 0.5).float().unsqueeze(-1)
-                loss = F.mse_loss(predictions, target_patches, reduction='none')
-                masked_loss = loss * mask_patches
-                final_loss = masked_loss.sum() / (mask_patches.sum() + 1e-8)
-                total_test_loss += final_loss.item()
-                num_test_batches += 1
-        avg_test_loss = total_test_loss / num_test_batches if num_test_batches > 0 else 0
-        print(f"\n--- FINAL TEST LOSS: {avg_test_loss:.4f} ---")
+        if not (stop_event and stop_event.is_set()):
+            print("\n--- Training Finished Successfully ---")
+            print("Running final evaluation on the test set...")
+            model.eval()
+            total_test_loss, num_test_batches = 0, 0
+            with torch.no_grad():
+                for batch in test_dataloader:
+                    if batch is None: continue
+                    images, metadata, masks = batch
+                    images, metadata, masks = images.to(device), metadata.to(device), masks.to(device)
+                    predictions, ids_restore = model(images, metadata)
+                    target_patches = patchify(images, patch_size)
+                    mask_patches = (patchify(masks, patch_size).mean(dim=-1) > 0.5).float().unsqueeze(-1)
+                    loss = F.mse_loss(predictions, target_patches, reduction='none')
+                    masked_loss = loss * mask_patches
+                    final_loss = masked_loss.sum() / (mask_patches.sum() + 1e-8)
+                    total_test_loss += final_loss.item()
+                    num_test_batches += 1
+            avg_test_loss = total_test_loss / num_test_batches if num_test_batches > 0 else 0
+            print(f"\n--- FINAL TEST LOSS: {avg_test_loss:.4f} ---")
 
-        final_model_path = os.path.join(output_dir, f"{base_name}.pth")
-        torch.save(model.state_dict(), final_model_path)
-        print(f"Final model state saved to: {final_model_path}")
-        
-        config_path = os.path.join(output_dir, f"{base_name}.json")
-        # Save the original config, not the modified one from the thread
-        with open(config_path, 'w') as f: json.dump(config, f, indent=4)
-        print(f"Model configuration saved to: {config_path}")
-        
-        plot_history(history_path, output_dir)
+            final_model_path = os.path.join(output_dir, f"{base_name}.pth")
+            torch.save(model.state_dict(), final_model_path)
+            print(f"Final model state saved to: {final_model_path}")
+            
+            config_path = os.path.join(output_dir, f"{base_name}.json")
+            with open(config_path, 'w') as f: json.dump(config, f, indent=4)
+            print(f"Model configuration saved to: {config_path}")
+            
+            plot_history(history_path, output_dir)
 
     except Exception as e:
         print(f"\n--- AN ERROR OCCURRED ---", file=sys.stderr)
@@ -346,8 +345,14 @@ def start_training(config, stop_event=None):
 # --- Part 5: Flask Web Application ---
 app = Flask(__name__)
 
+# Global variables for Flask app state
+training_log_capture = io.StringIO()
+training_status = {"running": False, "log": "", "error": False, "stopped": False}
+stop_training_event = threading.Event()
+
 def run_training_thread_wrapper(config):
     global training_status, training_log_capture
+    # Reset log and status for the new run
     training_log_capture = io.StringIO()
     training_status.update({"running": True, "log": "Starting training...\n", "error": False, "stopped": False})
     try:
@@ -613,7 +618,7 @@ def parse_list_from_string(s):
 
 @app.route("/train", methods=["POST"])
 def train():
-    global training_status
+    global training_status, stop_training_event
     if training_status["running"]: return jsonify({"status": "error", "message": "A training job is already running."}), 400
     stop_training_event.clear()
     try:
@@ -640,7 +645,7 @@ def train():
 
 @app.route("/stop", methods=["POST"])
 def stop_training():
-    global training_status
+    global training_status, stop_training_event
     if not training_status["running"]: return jsonify({"status": "error", "message": "No training job is currently running."}), 400
     stop_training_event.set()
     return jsonify({"status": "stopping"})
@@ -712,14 +717,12 @@ def plot():
         return jsonify({"status": "error", "message": traceback.format_exc()}), 500
 
 def run_web_server():
-    """Function to start the Flask web server."""
     print("Starting Catchment MAE Training UI...")
     print("Please install imagecodecs if you have LZW compressed TIFFs: pip install imagecodecs")
     print("Navigate to http://127.0.0.1:5001 in your browser.")
     app.run(host="127.0.0.1", port=5001, debug=False, use_reloader=False)
 
 def run_cli():
-    """Function to handle command-line training."""
     parser = argparse.ArgumentParser(description="Train a Catchment Foundation Model (MAE) from the command line.")
     parser.add_argument('--input_dir', type=str, required=True, help='Path to the directory containing TIFF images.')
     parser.add_argument('--output_dir', type=str, required=True, help='Path to the directory where all outputs will be saved.')
@@ -735,7 +738,7 @@ def run_cli():
     parser.add_argument('--seed', type=int, default=42, help='Random seed for reproducibility.')
     parser.add_argument('--continue_training', action='store_true', help='Flag to continue training from the latest checkpoint in the output directory.')
     
-    args = parser.parse_args(sys.argv[2:]) # Ignore the 'train' command itself
+    args = parser.parse_args(sys.argv[2:])
     config = vars(args)
     config['base_name'] = os.path.basename(config['output_dir'])
     
